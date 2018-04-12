@@ -1,1 +1,0 @@
-Robot App could detect human face from image.
