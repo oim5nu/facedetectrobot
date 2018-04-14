@@ -49,8 +49,33 @@ class App extends Component {
       imageUrl: '',
       box: {},
       route: 'signin',
-      isSignedIn: false
+      isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
+  }
+
+  // componentDidMount() {
+  //   fetch('http://localhost:3000')
+  //     .then(response => response.json())
+  //     .then(console.log());
+  // }
+
+  loadUser = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+      } 
+    });
   }
 
   calculateFaceLocation = (data) => {
@@ -82,6 +107,19 @@ class App extends Component {
       this.state.input
     ).then(response => {
       //console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
+      if (response) {
+        fetch('http://localhost:3000/image', {
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
+          })
+        })
+        .then(response => response.json())
+        .then(count => {
+          this.setState(Object.assign(this.state.user, { entries: count } ))
+        })
+      }
       const box = this.calculateFaceLocation(response);
       this.displayFaceBox(box);
     }).catch(err => {
@@ -100,7 +138,7 @@ class App extends Component {
   }
 
   render() {
-    const { isSignedIn, imageUrl, route, box } = this.state;
+    const { isSignedIn, imageUrl, route, box, user } = this.state;
     return (
       <div className="App">
         <Particles className="particles"
@@ -110,7 +148,7 @@ class App extends Component {
         { route === 'home' ?
           <div>
             <Logo />
-            <Rank />
+            <Rank name={user.name} entries={user.entries} />
             <ImageLinkForm 
               onInputChange={this.onInputChange} 
               onButtonSubmit={this.onButtonSubmit}
@@ -118,8 +156,8 @@ class App extends Component {
             <FaceRecognition box={box} imageUrl={imageUrl} />
           </div>
           : ( route === 'signin' ?
-          <Signin onRouteChange={this.onRouteChange} /> : 
-          <Register onRouteChange={this.onRouteChange} />
+          <Signin onRouteChange={this.onRouteChange} loadUser={this.loadUser} /> : 
+          <Register onRouteChange={this.onRouteChange} loadUser={this.loadUser}/>
           )
         }
       </div>
